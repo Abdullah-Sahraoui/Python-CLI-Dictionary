@@ -1,8 +1,9 @@
 import json
 from difflib import get_close_matches
 
-data = json.load(open("C:/Users/Bido2/Downloads/data.json"))
+data = json.load(open("./data.json"))
 
+# Function for dealing with multiple or single definitions:
 def numberOfDefinitions(word):
   if len(data[word]) > 0:
     print("The word is: {}\nThe definitions are:\n".format(word))
