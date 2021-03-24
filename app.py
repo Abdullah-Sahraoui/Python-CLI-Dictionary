@@ -1,47 +1,48 @@
-import json
+import mysql.connector
 from difflib import get_close_matches
 
-data = json.load(open("./data.json"))
+con = mysql.connector.connect(
+  user = "ardit700_student",
+  password = "ardit700_student",
+  host = "108.167.140.122",
+  database = "ardit700_pm1database"
+)
 
-# Function for dealing with multiple or single definitions:
-def numberOfDefinitions(word):
-  if len(data[word]) > 1:
+cursor = con.cursor()
+
+def numberOfDefinitions(word, results):
+  # case of multiple definitions:
+  if len(results) > 1:
     print("The word is: {}\nThe definitions are:\n".format(word))
-    i = 0
-    while i < len(data[word]):
-      print("\t*" + data[word][i])
-      i += 1 
+    for res in results:
+      print("\033[1;32;40m\t*" + res[1])
     return
-  else:
-    print("The word is: {}\nThe definition is: \n\t*{}".format(word, data[word][0]))
-    return
-
-def lookUp(word):
-  closeMatches = get_close_matches(word, data.keys())
-
-  # Allows for proper nouns such as "Paris" to be looked up successfully:
-  if word.capitalize() in data.keys():
-    numberOfDefinitions(word.capitalize())
-    return
-  elif word.upper() in data.keys():
-    numberOfDefinitions(word.upper())
-    return
-
-  if word in data.keys():
-    # Below function call changes output depending on number of definitions.
-    numberOfDefinitions(word)
-
-  # Checking for close matches:
-  elif len(closeMatches) > 0:
-    userChoice = input("Did you mean {}?\nPlease indicate your choice with (y/n)\n".format(closeMatches[0]))
-    if userChoice.lower() == "y":
-      numberOfDefinitions(closeMatches[0])
   
+  # case of single definition:
   else:
-    print("That word doesn't exist. Please double-check that you have spelt it correctly.")
+    print("The word is: {}\nThe definition is:\n\t\033[1;32;40m*{}".format(results[0][0], results[0][1]))
     return
 
+def lookUp(userWord):
+  query = cursor.execute("SELECT * FROM Dictionary WHERE Expression = '{}'".format(userWord))
 
-  
-userWord = input("Please input the word whose meaning you would like to know below.\n").lower()
-lookUp(userWord)
+  # "results" returns a list of tuples for different definitions of the same word.
+  results = cursor.fetchall()
+  closeMatches = get_close_matches(userWord, results)
+
+  # allows for proper nouns like "Paris" and acronyms like "USA" to be looked up successfully:
+  if userWord.capitalize() in results:
+    numberOfDefinitions(userWord.capitalize(), results)
+    return
+  elif userWord.upper() in results:
+    numberOfDefinitions(userWord.upper(), results)
+    return
+
+  if results:
+    numberOfDefinitions(userWord, results)
+  else:
+    print("The word is: {}\nThe definition is: \t\033[1;32;40m*{}".format(userWord, results[0][1]))
+
+
+userInput = input("Please input the word whose meaning you would like to know below.\n").lower()
+lookUp(userInput)
